@@ -37,17 +37,34 @@ async function run() {
         const ordersCollection = db.collection('orders');
 
 
-        app.get('/petsSupplies', async(req, res)=>{
-            const cursor = petsListsCollection.find();
-            const result = await cursor.toArray();
-            res.send(result);
-        })
+        app.get('/petsSupplies', async (req, res) => {
+          const { minPrice, maxPrice, category } = req.query;
+                
+          const query = {};
+                
+          if (category) {
+            query.category = { $in: category.split(",") };
+          }
+      
+          if (minPrice || maxPrice) {
+            query.price = {};
+            if (minPrice) query.price.$gte = Number(minPrice);
+            if (maxPrice) query.price.$lte = Number(maxPrice);
+          }
+      
+          console.log("QUERY =>", query);
+      
+          const result = await petsListsCollection.find(query).toArray();
+          res.send(result);
+        });
+
        app.get('/petsSupplies/:id', async (req, res) => {
             const id = req.params.id;
             const query = {_id: new ObjectId(id)};
             const result = await petsListsCollection.findOne(query);
             res.send(result);
         })
+        
         app.get('/myOrders', async(req, res) => {
             const email = req.query.email;
             const query = {};
@@ -57,7 +74,21 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result);
         })
-
+        app.get('/myLists', async(req, res)=>{
+            const email = req.query.email;
+            const query = {};
+            if(email) {query.email = email}
+            else return
+            const cursor = petsListsCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+        app.get('/recentList',async(req,res)=>{
+            const cursor = petsListsCollection.find({ date: { $exists: true } }).sort({date: -1}).limit(6);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+        
         app.post('/addList', async(req, res) => {
             const newList = req.body;
             const result = await petsListsCollection.insertOne(newList);
