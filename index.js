@@ -52,8 +52,6 @@ async function run() {
             if (maxPrice) query.price.$lte = Number(maxPrice);
           }
       
-          console.log("QUERY =>", query);
-      
           const result = await petsListsCollection.find(query).toArray();
           res.send(result);
         });
@@ -99,6 +97,31 @@ async function run() {
             const result = await ordersCollection.insertOne(newOrder);
             res.send(result);
 
+        })
+        app.delete('/product/:id', async(req, res)=>{
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)};
+            const result = await petsListsCollection.deleteOne(query);
+            res.send(result);
+        })
+        app.patch('/update/:id', async(req, res)=>{
+            const id = req.params.id;
+            const updatedInfo = req.body;
+            const query = {_id: new ObjectId(id)};
+            const update ={
+                $set: {
+                    productName: updatedInfo.productName,
+                    buyerName: updatedInfo.buyerName,
+                    email: updatedInfo.email,
+                    price: updatedInfo.price,
+                    image: updatedInfo.image,
+                    category: updatedInfo.category,
+                    location: updatedInfo.address,
+                    description: updatedInfo.description,
+                }
+            }
+            const result = await petsListsCollection.updateOne(query, update);
+            res.send(result);
         })
 
 
