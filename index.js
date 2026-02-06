@@ -6,6 +6,33 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./pawmart-firebase-admin-key.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
+
+const verifyFireBaseToken = async (req, res, next) =>{
+    const authorization = req.headers.authorization;
+
+    if(!authorization){
+        return res.status(401).send({message: 'unauthorized access'})
+    }
+    const token = authorization.split(' ')[1];
+    try{
+        const decoded = await admin.auth().verifyIdToken(token);
+        console.log("inside token", decoded);
+        req.token_email = decoded.email;
+        next();
+    }
+    catch(error) {
+        return res.status(401).send({message: "unauthorized access"});
+    }
+}
 
 
 app.use(cors());
@@ -87,7 +114,8 @@ async function run() {
             res.send(result);
         })
         
-        app.post('/addList', async(req, res) => {
+        app.post('/addList', verifyFireBaseToken, async(req, res) => {
+            console.log('header is .. ', req.headers);
             const newList = req.body;
             const result = await petsListsCollection.insertOne(newList);
             res.send(result);
