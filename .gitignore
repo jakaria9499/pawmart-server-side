@@ -1,4 +1,5 @@
 node_modules
 .env
-pawmart-firebase-admin-key.json
+pawMart-firebase-admin-key.json
 vercel.json
+.vercel
