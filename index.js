@@ -25,7 +25,6 @@ const verifyFireBaseToken = async (req, res, next) =>{
     const token = authorization.split(' ')[1];
     try{
         const decoded = await admin.auth().verifyIdToken(token);
-        console.log("inside token", decoded);
         req.token_email = decoded.email;
         next();
     }
@@ -115,8 +114,11 @@ async function run() {
         })
         
         app.post('/addList', verifyFireBaseToken, async(req, res) => {
-            console.log('header is .. ', req.headers);
+            
             const newList = req.body;
+            if(newList.email !== req.token_email){
+                return res.status(403).send({message: 'Forbidden Access'});
+            }
             const result = await petsListsCollection.insertOne(newList);
             res.send(result);
         })
