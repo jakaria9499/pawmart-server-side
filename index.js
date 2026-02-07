@@ -45,20 +45,25 @@ app.get('/',(req, res)=>{
 })
 
 
+let client;
+let clientPromise;
 
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
+if (!clientPromise) {
+  client = new MongoClient(uri, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    },
+  });
+  clientPromise = client.connect();
+}
+
 
 
 async function run() {
     try{
-        await client.connect();
-        await client.db("pawMart").command({ping: 1});
+        const connectedClient = await clientPromise;
 
         const db = client.db("pawMart");
         const petsListsCollection = db.collection('listings');
@@ -114,6 +119,7 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result);
         })
+
         
         app.post('/addList', verifyFireBaseToken, async(req, res) => {
             
@@ -158,6 +164,10 @@ async function run() {
 
 
     }
+    catch (err) {
+        console.error("DB connection error:", err);
+    }
+    
     finally {
 
     }
@@ -165,6 +175,6 @@ async function run() {
 run().catch(console.dir);
 
 
-app.listen(port, ()=>{
-    console.log(`pawMart server is running on port: ${port}`);
-})
+
+
+export default app;
